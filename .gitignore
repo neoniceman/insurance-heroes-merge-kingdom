@@ -1,0 +1,11 @@
+# 비밀키 — 절대 커밋 금지
+.env.local
+.env
+
+# 구버전 아이템 아트 백업(불필요)
+assets/items_old_v1/
+
+# OS / 에디터
+.DS_Store
+*.log
+node_modules/
