@@ -355,6 +355,16 @@ export class Board {
     ctx.lineWidth = s * 0.02; ctx.strokeStyle = '#fff'; ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.font = `900 ${s * 0.18}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(String(e.charges), s * 0.32, -s * 0.31);
+    // 막힘 안내: 합칠 게 없을 때 충전된 생산기 위에 "👆 탭!" 말풍선(통통 튐)
+    if (this.hintProducers && e.charges > 0) {
+      const by = -s * 0.62 + Math.sin(t * 6) * s * 0.06;
+      const bw = s * 0.5, bh = s * 0.26;
+      ctx.fillStyle = '#ffcf3a';
+      this._rr(ctx, -bw / 2, by - bh / 2, bw, bh, bh / 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-s * 0.06, by + bh / 2); ctx.lineTo(s * 0.06, by + bh / 2); ctx.lineTo(0, by + bh * 0.95); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#3a2c00'; ctx.font = `900 ${s * 0.15}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('탭!', 0, by);
+    }
     ctx.restore();
   }
 

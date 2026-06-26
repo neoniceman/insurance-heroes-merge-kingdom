@@ -23,6 +23,7 @@ export class UI {
     bus.on('newDiscovery', ({ item, reward }) => this._discoveryModal(item, reward));
     bus.on('merge', ({ item, x, y }) => this._mergePop(item, x, y));
     bus.on('tapItem', (e) => this._nextHint(e));
+    bus.on('emergencySupply', (item) => this._toast(`🆘 긴급 보급! ${item.name} 지급 (막힘 방지)`));
   }
 
   // 아이템 탭 → 다음 진화 미리보기(궁금증 유발)

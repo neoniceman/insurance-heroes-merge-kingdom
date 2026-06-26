@@ -194,7 +194,7 @@ export class Game {
     return !!e;
   }
   // 코인으로 사는 보급 상자 — 보석이 없어도 항상 새 아이템 확보(막힘 방지).
-  supplyCost() { return 30 + this.level * 8; }
+  supplyCost() { return 15 + this.level * 5; }
   openSupply() {
     const cost = this.supplyCost();
     if (this.coins < cost) { audio.error(); return { ok: false, reason: 'coins', cost }; }
@@ -210,6 +210,30 @@ export class Game {
     audio.pop();
     return { ok: true, item: getItem(id), cost };
   }
+  // 막힘 감지 — 합칠 게 없으면 안내, 완전히 막히면 긴급 무료 지급(영구 막힘 방지)
+  _checkStuck(dt) {
+    this._stuckTimer = (this._stuckTimer || 0) + dt;
+    if (this._stuckTimer < 1) return;
+    this._stuckTimer = 0;
+    const hasMerge = !!this.board.findMergePair();
+    const readyProducer = this.board.entries.some(e => e.kind === 'producer' && e.charges > 0);
+    const canSupply = this.coins >= this.supplyCost();
+    const hasEmpty = this.board.emptyCells().length > 0;
+    // 생산기에 "탭!" 안내를 띄울지 — 합칠 게 없고 충전된 생산기가 있을 때
+    this.board.hintProducers = !hasMerge && readyProducer;
+    // 완전 막힘(머지·충전·코인 모두 없음)이면 긴급 무료 아이템
+    if (!hasMerge && !readyProducer && !canSupply && hasEmpty) {
+      this._stuckCount = (this._stuckCount || 0) + 1;
+      if (this._stuckCount >= 3) {            // 3초 연속 막힘 확인 후 지급
+        this._stuckCount = 0;
+        const id = ['insurance_1', 'car_1', 'fire_1', 'health_1'][(Math.random() * 4) | 0];
+        const e = this.board.spawnItem(id);
+        if (e) { this.particles.ring(e.px, e.py, '#ffd76a', 20); this.particles.floatText(e.px, e.py - this.board.cell * 0.5, '긴급 보급!', '#ffd76a'); }
+        bus.emit('emergencySupply', getItem(id));
+      }
+    } else this._stuckCount = 0;
+  }
+
   claimQuest(id) {
     const r = this.quests.claim(id);
     if (!r) return false;
@@ -266,6 +290,7 @@ export class Game {
     if (this.superFlash > 0) this.superFlash = Math.max(0, this.superFlash - dt * 2);
     if (this.zoom > 0) this.zoom = Math.max(0, this.zoom - dt * 0.25);
     this._updateAmbient(dt);
+    this._checkStuck(dt);
 
     // 자동 머지 (해금 시)
     if (this.autoMerge) {
